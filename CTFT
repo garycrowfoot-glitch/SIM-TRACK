@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Triage Feedback Tool</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Lucide React icons as inline SVG components
+        const AlertCircle = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        );
+        
+        const Check = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+        
+        const Plus = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+        
+        const Save = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+        );
+        
+        const Trash2 = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        );
+        
+        const FileText = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+        );
+        
+        const ChevronLeft = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        );
+        
+        const ChevronRight = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+        
+        const Download = () => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+        );
+
+        const TriageFeedbackTool = () => {
+          const [scenarios, setScenarios] = useState([]);
+          const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
+          const [loading, setLoading] = useState(true);
+          const [editMode, setEditMode] = useState(false);
+          
+          const [formData, setFormData] = useState({
+            scenarioName: '',
+            studentTriage: '',
+            bestPractice: '',
+            atsCategory: '',
+            studentAtsCategory: ''
+          });
+          
+          const [generatedFeedback, setGeneratedFeedback] = useState('');
+
+          // Sample scenario for demonstration
+          const sampleScenario = {
+            id: Date.now(),
+            scenarioName: "Chest Pain Presentation - SAMPLE",
+            studentTriage: "Patient presents with chest pain. Pain started 2 hours ago. Patient looks uncomfortable. HR 95, BP 145/90. Patient rates pain 7/10.",
+            bestPractice: "45-year-old male presents to ED with central crushing chest pain radiating to left arm. Pain onset 2 hours ago while at rest, described as 7/10 severity. Associated symptoms include nausea and diaphoresis. Past medical history includes hypertension and hyperlipidemia. Current medications: Amlodipine 10mg daily. No known drug allergies. Patient appears anxious and diaphoretic. Vital signs: HR 95 bpm, BP 145/90 mmHg, RR 20/min, SpO2 98% on room air, Temp 36.8°C. Primary survey: Airway patent, breathing adequate, circulation stable. ECG requested immediately. This presentation requires urgent assessment given age, cardiac risk factors, and nature of symptoms consistent with potential acute coronary syndrome.",
+            atsCategory: "2",
+            studentAtsCategory: "3",
+            feedback: ""
+          };
+
+          // Load scenarios from localStorage
+          useEffect(() => {
+            loadScenarios();
+          }, []);
+
+          const loadScenarios = () => {
+            try {
+              const stored = localStorage.getItem('triage-scenarios');
+              if (stored) {
+                const loadedScenarios = JSON.parse(stored);
+                setScenarios(loadedScenarios);
+                if (loadedScenarios.length > 0) {
+                  loadScenario(loadedScenarios[0]);
+                }
+              } else {
+                // If no scenarios exist, load the sample
+                const samplesArray = [sampleScenario];
+                localStorage.setItem('triage-scenarios', JSON.stringify(samplesArray));
+                setScenarios(samplesArray);
+                loadScenario(sampleScenario);
+              }
+            } catch (error) {
+              console.log('Loading sample scenario');
+              setScenarios([sampleScenario]);
+              loadScenario(sampleScenario);
+            } finally {
+              setLoading(false);
+            }
+          };
+
+          const saveScenarios = (updatedScenarios) => {
+            try {
+              localStorage.setItem('triage-scenarios', JSON.stringify(updatedScenarios));
+              setScenarios(updatedScenarios);
+            } catch (error) {
+              console.error('Error saving scenarios:', error);
+              alert('Failed to save scenarios. Please try again.');
+            }
+          };
+
+          const loadScenario = (scenario) => {
+            setFormData({
+              scenarioName: scenario.scenarioName,
+              studentTriage: scenario.studentTriage,
+              bestPractice: scenario.bestPractice,
+              atsCategory: scenario.atsCategory,
+              studentAtsCategory: scenario.studentAtsCategory
+            });
+            setGeneratedFeedback(scenario.feedback || '');
+          };
+
+          const addNewScenario = () => {
+            if (scenarios.length >= 10) {
+              alert('Maximum of 10 scenarios reached');
+              return;
+            }
+            setFormData({
+              scenarioName: `Scenario ${scenarios.length + 1}`,
+              studentTriage: '',
+              bestPractice: '',
+              atsCategory: '',
+              studentAtsCategory: ''
+            });
+            setGeneratedFeedback('');
+            setEditMode(true);
+            setCurrentScenarioIndex(scenarios.length);
+          };
+
+          const saveCurrentScenario = () => {
+            if (!formData.scenarioName.trim()) {
+              alert('Please provide a scenario name');
+              return;
+            }
+
+            const newScenario = {
+              id: currentScenarioIndex < scenarios.length ? scenarios[currentScenarioIndex].id : Date.now(),
+              ...formData,
+              feedback: generatedFeedback
+            };
+
+            let updatedScenarios;
+            if (currentScenarioIndex < scenarios.length) {
+              updatedScenarios = [...scenarios];
+              updatedScenarios[currentScenarioIndex] = newScenario;
+            } else {
+              updatedScenarios = [...scenarios, newScenario];
+            }
+
+            saveScenarios(updatedScenarios);
+            setEditMode(false);
+          };
+
+          const deleteScenario = () => {
+            if (!confirm('Are you sure you want to delete this scenario?')) return;
+            
+            const updatedScenarios = scenarios.filter((_, index) => index !== currentScenarioIndex);
+            saveScenarios(updatedScenarios);
+            
+            const newIndex = Math.max(0, currentScenarioIndex - 1);
+            setCurrentScenarioIndex(newIndex);
+            if (updatedScenarios.length > 0) {
+              loadScenario(updatedScenarios[newIndex]);
+            } else {
+              setFormData({
+                scenarioName: '',
+                studentTriage: '',
+                bestPractice: '',
+                atsCategory: '',
+                studentAtsCategory: ''
+              });
+              setGeneratedFeedback('');
+            }
+          };
+
+          const navigateScenario = (direction) => {
+            const newIndex = direction === 'next' 
+              ? Math.min(scenarios.length - 1, currentScenarioIndex + 1)
+              : Math.max(0, currentScenarioIndex - 1);
+            
+            setCurrentScenarioIndex(newIndex);
+            loadScenario(scenarios[newIndex]);
+            setEditMode(false);
+          };
+
+          const generateFeedback = () => {
+            if (!formData.studentTriage || !formData.bestPractice) {
+              alert('Please provide both student triage and best practice example');
+              return;
+            }
+
+            const feedback = analyzeTriage(
+              formData.studentTriage,
+              formData.bestPractice,
+              formData.atsCategory,
+              formData.studentAtsCategory
+            );
+            
+            setGeneratedFeedback(feedback);
+          };
+
+          const analyzeTriage = (studentText, bestPracticeText, correctAts, studentAts) => {
+            let feedbackParts = [];
+            
+            feedbackParts.push("Thank you for your thorough approach to this triage scenario.");
+            
+            if (studentAts && correctAts) {
+              if (studentAts.toLowerCase() === correctAts.toLowerCase()) {
+                feedbackParts.push(`You correctly identified this as an ATS Category ${correctAts} presentation, demonstrating good clinical judgment regarding urgency.`);
+              } else {
+                feedbackParts.push(`I noticed you triaged this as Category ${studentAts}. Let's explore this together - the clinical indicators suggest this presentation aligns more closely with Category ${correctAts}. Consider what specific factors might elevate or reduce the urgency in this case.`);
+              }
+            }
+            
+            const strengths = identifyStrengths(studentText, bestPracticeText);
+            if (strengths.length > 0) {
+              feedbackParts.push(`You demonstrated strong clinical reasoning in several areas: ${strengths.join(', ')}.`);
+            }
+            
+            const gaps = identifyGaps(studentText, bestPracticeText);
+            if (gaps.length > 0) {
+              feedbackParts.push(`To strengthen your triage assessment, consider incorporating: ${gaps.join('; ')}. These elements can help build a more comprehensive clinical picture and support priority decision-making.`);
+            }
+            
+            const accuracyIssues = checkAccuracy(studentText, bestPracticeText);
+            if (accuracyIssues.length > 0) {
+              feedbackParts.push(`I'd like to revisit a few clinical details with you: ${accuracyIssues.join('; ')}. Accurate documentation of these findings is essential for safe handover and ongoing care.`);
+            }
+            
+            feedbackParts.push("Your engagement with this scenario shows developing clinical judgment. As you continue practicing triage, focus on systematically gathering key physiological, historical, and contextual information to support your urgency decisions. What questions do you have about this assessment?");
+            
+            return feedbackParts.join(' ');
+          };
+
+          const identifyStrengths = (studentText, bestPracticeText) => {
+            const strengths = [];
+            const student = studentText.toLowerCase();
+            const bestPractice = bestPracticeText.toLowerCase();
+            
+            if (student.includes('vital signs') || student.includes('bp') || student.includes('heart rate') || student.includes('respiratory rate') || student.includes('hr')) {
+              strengths.push('inclusion of vital signs assessment');
+            }
+            if (student.includes('pain') && bestPractice.includes('pain')) {
+              strengths.push('pain assessment and documentation');
+            }
+            if (student.includes('history') || student.includes('onset') || student.includes('started')) {
+              strengths.push('gathering relevant history');
+            }
+            if (student.includes('allerg') && bestPractice.includes('allerg')) {
+              strengths.push('checking for allergies');
+            }
+            if (student.includes('medication') && bestPractice.includes('medication')) {
+              strengths.push('medication history');
+            }
+            if (student.includes('uncomfortable') || student.includes('anxious') || student.includes('distress') || student.includes('looks')) {
+              strengths.push('observation of patient appearance and distress level');
+            }
+            
+            return strengths;
+          };
+
+          const identifyGaps = (studentText, bestPracticeText) => {
+            const gaps = [];
+            const student = studentText.toLowerCase();
+            const bestPractice = bestPracticeText.toLowerCase();
+            
+            const keyElements = [
+              { term: ['airway', 'breathing', 'circulation', 'primary survey'], label: 'primary survey elements (airway, breathing, circulation)' },
+              { term: ['spo2', 'oxygen saturation', 'o2'], label: 'oxygen saturation measurement' },
+              { term: ['respiratory rate', 'rr', 'respirations'], label: 'respiratory rate documentation' },
+              { term: ['temperature', 'temp'], label: 'temperature measurement' },
+              { term: ['pain scale', 'pain score', '/10'], label: 'pain assessment using appropriate scale' },
+              { term: ['radiation', 'radiating'], label: 'radiation or location characteristics of pain' },
+              { term: ['associated symptoms', 'nausea', 'vomiting', 'diaphoresis', 'sweating'], label: 'associated symptoms' },
+              { term: ['past medical', 'pmh', 'history', 'medical history'], label: 'relevant past medical history' },
+              { term: ['risk factor'], label: 'identification of relevant risk factors' },
+              { term: ['allerg'], label: 'allergy status' },
+              { term: ['medication', 'drugs', 'medicines'], label: 'current medications' },
+              { term: ['at rest', 'exertion', 'activity', 'precipitating'], label: 'precipitating factors or context of symptom onset' },
+              { term: ['age', 'year', 'male', 'female'], label: 'patient demographics' }
+            ];
+            
+            keyElements.forEach(element => {
+              const inBestPractice = element.term.some(term => bestPractice.includes(term));
+              const inStudent = element.term.some(term => student.includes(term));
+              
+              if (inBestPractice && !inStudent) {
+                gaps.push(element.label);
+              }
+            });
+            
+            return gaps;
+          };
+
+          const checkAccuracy = (studentText, bestPracticeText) => {
+            const issues = [];
+            const student = studentText.toLowerCase();
+            
+            if (student.includes('looks') && !student.includes('appears')) {
+              issues.push('consider using more specific clinical descriptors rather than general observations');
+            }
+            
+            return issues;
+          };
+
+          const exportScenarioTemplate = () => {
+            const template = {
+              scenarioName: "Enter scenario name here",
+              bestPractice: "Enter the ideal/gold standard triage documentation here including: patient demographics, presenting complaint with onset and characteristics, vital signs (HR, BP, RR, SpO2, Temp), primary survey, past medical history, medications, allergies, associated symptoms, risk factors, and clinical reasoning for ATS category",
+              atsCategory: "Enter correct ATS category (1-5)",
+              notes: "This is a template. Fill in your scenario details. The student's triage and ATS category will be entered during assessment."
+            };
+            
+            const dataStr = JSON.stringify(template, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'scenario-template.json';
+            link.click();
+          };
+
+          if (loading) {
+            return (
+              <div className="flex items-center justify-center h-screen bg-gray-50">
+                <div className="text-lg text-gray-600">Loading scenarios...</div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+              <div className="max-w-6xl mx-auto">
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h1 className="text-3xl font-bold text-indigo-900 mb-2">Clinical Triage Feedback Tool</h1>
+                  <p className="text-gray-600">INACSL-aligned feedback generation for triage scenarios</p>
+                  
+                  {scenarios.length > 0 && scenarios[0].scenarioName.includes('SAMPLE') && (
+                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle />
+                        <div>
+                          <h3 className="font-semibold text-yellow-900 mb-1">Sample Scenario Loaded</h3>
+                          <p className="text-sm text-yellow-800">
+                            A demonstration scenario has been loaded to show you how the tool functions. 
+                            Try clicking "Generate Feedback" to see the INACSL-aligned feedback in action. 
+                            You can delete this sample and add your own scenarios when ready.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => navigateScenario('prev')}
+                        disabled={currentScenarioIndex === 0 || scenarios.length === 0}
+                        className="p-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronLeft />
+                      </button>
+                      
+                      <div className="text-center">
+                        <div className="text-sm text-gray-500">Scenario</div>
+                        <div className="text-lg font-semibold text-gray-800">
+                          {scenarios.length > 0 ? `${currentScenarioIndex + 1} of ${scenarios.length}` : '0 of 10'}
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => navigateScenario('next')}
+                        disabled={currentScenarioIndex >= scenarios.length - 1 || scenarios.length === 0}
+                        className="p-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        <ChevronRight />
+                      </button>
+                    </div>
+
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={addNewScenario}
+                        disabled={scenarios.length >= 10}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      >
+                        <Plus />
+                        Add Scenario
+                      </button>
+                      
+                      {scenarios.length > 0 && (
+                        <>
+                          <button
+                            onClick={() => setEditMode(!editMode)}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                          >
+                            <FileText />
+                            {editMode ? 'View Mode' : 'Edit Mode'}
+                          </button>
+                          
+                          <button
+                            onClick={deleteScenario}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                          >
+                            <Trash2 />
+                            Delete
+                          </button>
+                        </>
+                      )}
+                      
+                      <button
+                        onClick={exportScenarioTemplate}
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                      >
+                        <Download />
+                        Download Template
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Scenario Details</h2>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Scenario Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.scenarioName}
+                          onChange={(e) => setFormData({...formData, scenarioName: e.target.value})}
+                          disabled={!editMode && scenarios.length > 0}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"
+                          placeholder="e.g., Chest Pain Presentation"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Student's Triage Documentation
+                        </label>
+                        <textarea
+                          value={formData.studentTriage}
+                          onChange={(e) => setFormData({...formData, studentTriage: e.target.value})}
+                          disabled={!editMode && scenarios.length > 0}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent h-32 disabled:bg-gray-100"
+                          placeholder="Enter the student's written triage assessment..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Student's ATS Category
+                        </label>
+                        <select
+                          value={formData.studentAtsCategory}
+                          onChange={(e) => setFormData({...formData, studentAtsCategory: e.target.value})}
+                          disabled={!editMode && scenarios.length > 0}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"
+                        >
+                          <option value="">Select Category</option>
+                          <option value="1">Category 1 - Immediate</option>
+                          <option value="2">Category 2 - 10 minutes</option>
+                          <option value="3">Category 3 - 30 minutes</option>
+                          <option value="4">Category 4 - 60 minutes</option>
+                          <option value="5">Category 5 - 120 minutes</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Best Practice Example
+                        </label>
+                        <textarea
+                          value={formData.bestPractice}
+                          onChange={(e) => setFormData({...formData, bestPractice: e.target.value})}
+                          disabled={!editMode && scenarios.length > 0}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent h-32 disabled:bg-gray-100"
+                          placeholder="Enter the ideal/best practice triage assessment..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Correct ATS Category
+                        </label>
+                        <select
+                          value={formData.atsCategory}
+                          onChange={(e) => setFormData({...formData, atsCategory: e.target.value})}
+                          disabled={!editMode && scenarios.length > 0}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"
+                        >
+                          <option value="">Select Category</option>
+                          <option value="1">Category 1 - Immediate</option>
+                          <option value="2">Category 2 - 10 minutes</option>
+                          <option value="3">Category 3 - 30 minutes</option>
+                          <option value="4">Category 4 - 60 minutes</option>
+                          <option value="5">Category 5 - 120 minutes</option>
+                        </select>
+                      </div>
+
+                      {editMode && (
+                        <button
+                          onClick={saveCurrentScenario}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                        >
+                          <Save />
+                          Save Scenario
+                        </button>
+                      )}
+
+                      <button
+                        onClick={generateFeedback}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      >
+                        <FileText />
+                        Generate Feedback
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Generated Feedback</h2>
+                    
+                    {generatedFeedback ? (
+                      <div className="space-y-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <Check />
+                            <div>
+                              <h3 className="font-semibold text-green-900 mb-2">INACSL-Aligned Feedback</h3>
+                              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{generatedFeedback}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle />
+                            <div>
+                              <h3 className="font-semibold text-blue-900 mb-2">Feedback Principles Applied</h3>
+                              <ul className="text-sm text-gray-700 space-y-1">
+                                <li>✓ Learner-centered and affirming</li>
+                                <li>✓ Specific and evidence-based</li>
+                                <li>✓ Constructive with growth focus</li>
+                                <li>✓ Kind and respectful tone</li>
+                                <li>✓ Actionable guidance provided</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(generatedFeedback);
+                            alert('Feedback copied to clipboard!');
+                          }}
+                          className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                        >
+                          Copy Feedback to Clipboard
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64 text-gray-400">
+                        <div className="text-center">
+                          <FileText />
+                          <p>Click "Generate Feedback" to create INACSL-aligned feedback</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-6 bg-white rounded-lg shadow-md p-4">
+                  <div className="text-sm text-gray-600">
+                    <strong>Note:</strong> This tool generates feedback aligned with INACSL standards emphasizing learner-centered, 
+                    constructive, and kind communication. All scenarios are saved automatically and persist between sessions. 
+                    You can download a scenario template using the "Download Template" button above.
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<TriageFeedbackTool />, document.getElementById('root'));
+    </script>
+</body>
+</html>
