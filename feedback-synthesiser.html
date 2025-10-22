@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Feedback Synthesiser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom right, #faf5ff, #fce7f3);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: bold;
+            color: #581c87;
+            margin-bottom: 8px;
+        }
+        h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        h3 {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        textarea {
+            font-family: monospace;
+            resize: vertical;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: #7c3aed;
+            color: white;
+            flex: 1;
+        }
+        .btn-primary:hover {
+            background: #6d28d9;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .btn-copy {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-copy:hover {
+            background: #1d4ed8;
+        }
+        .report-section {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border-left: 4px solid;
+            line-height: 1.6;
+        }
+        .section-purple {
+            background: #faf5ff;
+            border-color: #7c3aed;
+        }
+        .section-green {
+            background: #f0fdf4;
+            border-color: #16a34a;
+        }
+        .section-blue {
+            background: #eff6ff;
+            border-color: #2563eb;
+        }
+        .section-indigo {
+            background: #eef2ff;
+            border-color: #4f46e5;
+        }
+        .section-orange {
+            background: #fff7ed;
+            border-color: #ea580c;
+        }
+        .section-pink {
+            background: #fdf2f8;
+            border-color: #db2777;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .divider {
+            border-top: 1px solid #e5e7eb;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .footer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+            font-style: italic;
+        }
+        ol {
+            margin-left: 20px;
+            line-height: 1.8;
+            color: #374151;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Personal Feedback Synthesiser</h1>
+            <p class="subtitle">Synthesise individual scenario feedback into a comprehensive report</p>
+        </div>
+
+        <div class="card">
+            <h2>Input Individual Feedback</h2>
+            
+            <label>Student Name (Optional)</label>
+            <input type="text" id="studentName" placeholder="Enter student name...">
+            
+            <label>Paste All Individual Feedback Paragraphs</label>
+            <textarea id="feedbackInput" rows="12" placeholder="Paste all feedback from the 10 scenarios here..."></textarea>
+            
+            <div class="button-group">
+                <button class="btn-primary" onclick="generateReport()">Generate Synthesised Report</button>
+                <button class="btn-secondary" onclick="clearForm()">Clear</button>
+            </div>
+        </div>
+
+        <div id="reportSection" class="hidden">
+            <div class="card">
+                <div class="header-row">
+                    <h2>Synthesised Feedback Report</h2>
+                    <button class="btn-copy" onclick="copyReport()">Copy Report</button>
+                </div>
+
+                <div class="divider">
+                    <h3 id="reportName" style="font-size: 24px; color: #581c87;"></h3>
+                    <p id="reportDate" style="color: #6b7280;"></p>
+                </div>
+
+                <div class="report-section section-purple">
+                    <h3 style="color: #581c87;">Summary</h3>
+                    <p id="reportSummary"></p>
+                </div>
+
+                <div class="report-section section-green">
+                    <h3 style="color: #15803d;">Consistent Strengths</h3>
+                    <p id="reportStrengths"></p>
+                </div>
+
+                <div class="report-section section-blue">
+                    <h3 style="color: #1e40af;">Recurring Development Areas</h3>
+                    <p id="reportGaps"></p>
+                </div>
+
+                <div class="report-section section-indigo">
+                    <h3 style="color: #3730a3;">ATS Category Allocation Performance</h3>
+                    <p id="reportATS"></p>
+                </div>
+
+                <div class="report-section section-orange">
+                    <h3 style="color: #9a3412;">Priority Development Areas</h3>
+                    <p id="reportPriorities" style="white-space: pre-line;"></p>
+                </div>
+
+                <div class="report-section section-pink">
+                    <h3 style="color: #9f1239;">Closing Comment</h3>
+                    <p id="reportClosing"></p>
+                </div>
+
+                <div class="footer">
+                    This feedback has been generated using INACSL-aligned principles emphasizing learner-centered, 
+                    constructive, and kind communication to support professional development.
+                </div>
+            </div>
+        </div>
+
+        <div id="instructions" class="card">
+            <h3>How to Use This Tool</h3>
+            <ol>
+                <li>Copy all individual feedback paragraphs from your 10 triage scenarios</li>
+                <li>Paste them into the text area above (separated by line breaks)</li>
+                <li>Optionally add the student's name</li>
+                <li>Click "Generate Synthesised Report"</li>
+                <li>Review the structured report with identified patterns</li>
+                <li>Copy the report for your records</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let currentReport = null;
+
+        function generateReport() {
+            const feedbackInput = document.getElementById('feedbackInput').value;
+            const studentName = document.getElementById('studentName').value;
+
+            if (!feedbackInput.trim()) {
+                alert('Please paste the individual feedback paragraphs first');
+                return;
+            }
+
+            const text = feedbackInput;
+            const name = studentName.trim() || 'Student';
+
+            // Deep analysis of feedback
+            const analysis = analyzeDetailedFeedback(text);
+            
+            currentReport = {
+                name: name,
+                date: new Date().toLocaleDateString(),
+                summary: generateDetailedSummary(name, analysis),
+                strengths: generateDetailedStrengths(analysis),
+                gaps: generateDetailedGaps(analysis),
+                ats: generateDetailedATS(analysis),
+                priorities: generateDetailedPriorities(analysis),
+                closing: generateDetailedClosing(name, analysis)
+            };
+
+            displayReport();
+        }
+
+        function analyzeDetailedFeedback(text) {
+            const lower = text.toLowerCase();
+            
+            // Extract specific strengths mentioned multiple times
+            const strengthPatterns = {
+                'vital signs assessment': /vital signs|bp|heart rate|hr|blood pressure|respiratory rate|rr|oxygen saturation|spo2|temperature/gi,
+                'pain assessment and documentation': /pain assessment|pain.*\d+\/10|pain scale|pain score/gi,
+                'patient history gathering': /history|onset|timeline|duration|started|began/gi,
+                'allergy documentation': /allerg/gi,
+                'medication history': /medication|drugs|medicines/gi,
+                'primary survey': /primary survey|airway|breathing|circulation|abc/gi,
+                'clinical judgment': /clinical judgment|clinical reasoning|decision/gi,
+                'patient observation': /observation|appears|looks|assessed|noted/gi,
+                'systematic assessment': /systematic|comprehensive|thorough/gi
+            };
+
+            const strengths = [];
+            for (const [label, pattern] of Object.entries(strengthPatterns)) {
+                const matches = text.match(pattern) || [];
+                if (matches.length >= 3) { // Mentioned 3+ times = consistent strength
+                    strengths.push({ label, count: matches.length });
+                }
+            }
+            strengths.sort((a, b) => b.count - a.count);
+
+            // Extract specific gaps from "consider incorporating" sections
+            const gapSections = text.match(/consider incorporating:([^.]+\.[^.]*)/gi) || [];
+            const strengthenSections = text.match(/to strengthen[^:]*:([^.]+\.[^.]*)/gi) || [];
+            
+            const allGapText = [...gapSections, ...strengthenSections].join(' ');
+            
+            const gapPatterns = {
+                'primary survey completion': /primary survey|airway|breathing|circulation/gi,
+                'oxygen saturation monitoring': /oxygen saturation|spo2|o2/gi,
+                'respiratory rate documentation': /respiratory rate|rr|respirations/gi,
+                'temperature measurement': /temperature|temp/gi,
+                'detailed pain characteristics': /pain.*radiation|pain.*character|pain.*location|radiating/gi,
+                'associated symptoms': /associated symptoms|nausea|vomiting|diaphoresis|sweating/gi,
+                'past medical history': /past medical|pmh|medical history/gi,
+                'risk factor assessment': /risk factor/gi,
+                'patient demographics': /demographics|age|gender/gi,
+                'medication history': /medication|current drugs/gi,
+                'allergy status': /allerg/gi,
+                'precipitating factors': /precipitating|trigger|what.*doing|activity|exertion/gi
+            };
+
+            const gaps = [];
+            for (const [label, pattern] of Object.entries(gapPatterns)) {
+                const matches = allGapText.match(pattern) || [];
+                if (matches.length >= 2) { // Mentioned 2+ times = recurring gap
+                    gaps.push({ label, count: matches.length });
+                }
+            }
+            gaps.sort((a, b) => b.count - a.count);
+
+            // ATS Performance analysis
+            const atsCorrect = (text.match(/correctly identified.*category/gi) || []).length;
+            const atsExplore = (text.match(/let's explore.*category|triaged this as category/gi) || []).length;
+            const totalATS = atsCorrect + atsExplore;
+
+            // Extract specific ATS mentions
+            const atsDiscussions = text.match(/category \d[^.]*\./gi) || [];
+
+            return {
+                strengths,
+                gaps,
+                atsCorrect,
+                atsExplore,
+                totalATS,
+                atsDiscussions,
+                feedbackCount: text.split(/thank you for your/gi).length - 1
+            };
+        }
+
+        function generateDetailedSummary(name, analysis) {
+            const scenarios = analysis.feedbackCount || 'multiple';
+            let parts = [];
+
+            parts.push(`${name} has completed ${scenarios} triage scenario assessments, demonstrating active engagement in developing clinical assessment competencies.`);
+            
+            if (analysis.strengths.length >= 3) {
+                parts.push(`Across these scenarios, clear patterns of consistent clinical practice have emerged, particularly in ${analysis.strengths[0].label}.`);
+            } else if (analysis.strengths.length > 0) {
+                parts.push(`Your assessments show emerging patterns in ${analysis.strengths[0].label}.`);
+            }
+
+            if (analysis.totalATS > 0) {
+                const accuracy = Math.round((analysis.atsCorrect / analysis.totalATS) * 100);
+                if (accuracy >= 80) {
+                    parts.push(`Your triage category decisions reflect strong clinical reasoning, with ${accuracy}% accuracy in urgency allocation.`);
+                } else if (accuracy >= 60) {
+                    parts.push(`Your triage category decisions show developing judgment (${accuracy}% accuracy), with clear opportunities for refinement through focused discussion of urgency indicators.`);
+                } else if (accuracy >= 40) {
+                    parts.push(`Your triage category allocation is an evolving skill (${accuracy}% accuracy), and targeted learning around the ATS framework will support your development.`);
+                } else {
+                    parts.push(`Triage category allocation requires focused attention, as this fundamental skill underpins safe emergency care practice.`);
+                }
+            }
+
+            parts.push(`This synthesised feedback identifies patterns across your work to guide intentional skill development and clinical growth.`);
+
+            return parts.join(' ');
+        }
+
+        function generateDetailedStrengths(analysis) {
+            if (analysis.strengths.length === 0) {
+                return "Your engagement with these triage scenarios demonstrates a willingness to practice clinical assessment. As you continue developing your skills, focus on building consistent patterns in your documentation and clinical reasoning processes.";
+            }
+
+            const topStrengths = analysis.strengths.slice(0, 4);
+            let parts = [];
+
+            parts.push(`Pattern analysis across your triage assessments reveals notable consistency in:`);
+            
+            const strengthList = topStrengths.map(s => s.label).join('; ');
+            parts.push(strengthList + '.');
+
+            if (analysis.strengths.length >= 4) {
+                parts.push(`This represents strong foundational practice. Your ability to reliably incorporate these elements across varied presentations demonstrates developing clinical competence and systematic thinking.`);
+            } else if (analysis.strengths.length >= 2) {
+                parts.push(`These emerging patterns show you're beginning to establish consistent clinical practice habits, which is an important developmental milestone.`);
+            }
+
+            parts.push(`These strengths provide a solid foundation to build upon as you continue refining your triage assessment approach.`);
+
+            return parts.join(' ');
+        }
+
+        function generateDetailedGaps(analysis) {
+            if (analysis.gaps.length === 0) {
+                return "Your triage documentation demonstrates attention to key clinical elements. To continue strengthening your practice, ensure you're systematically considering all components of comprehensive triage assessment in every patient encounter, even when time-pressured. Consistent completeness supports both clinical safety and your professional development.";
+            }
+
+            const topGaps = analysis.gaps.slice(0, 5);
+            let parts = [];
+
+            parts.push(`Across multiple scenarios, several elements appeared as recurring opportunities for growth:`);
+            
+            const gapList = topGaps.map(g => g.label).join('; ');
+            parts.push(gapList + '.');
+
+            if (analysis.gaps.length >= 4) {
+                parts.push(`The consistency of these gaps across scenarios suggests they represent specific learning priorities rather than isolated oversights.`);
+            } else {
+                parts.push(`Addressing these elements will enhance the comprehensiveness of your assessments.`);
+            }
+
+            parts.push(`Consider creating a mental checklist or using a structured approach (such as the primary survey framework) to ensure these elements are consistently captured. Each component contributes important information for safe clinical decision-making and appropriate urgency allocation.`);
+
+            return parts.join(' ');
+        }
+
+        function generateDetailedATS(analysis) {
+            if (analysis.totalATS === 0) {
+                return "ATS category allocation performance could not be assessed from the provided feedback. Accurate urgency categorisation is fundamental to safe triage practice and should be a focus area in future scenario work.";
+            }
+
+            const accuracy = Math.round((analysis.atsCorrect / analysis.totalATS) * 100);
+            let parts = [];
+
+            parts.push(`Across ${analysis.totalATS} triage scenarios, you correctly allocated ${analysis.atsCorrect} ATS categories (${accuracy}% accuracy).`);
+
+            if (accuracy >= 80) {
+                parts.push(`This demonstrates strong understanding of urgency indicators and appropriate clinical judgment. You're effectively weighing physiological parameters, time-critical conditions, and clinical trajectory to make sound triage decisions.`);
+                parts.push(`Continue to reflect on your reasoning process - what specific clinical features guided your urgency determination? This metacognitive practice will further strengthen your decision-making confidence.`);
+            } else if (accuracy >= 60) {
+                parts.push(`Your ATS allocation shows developing competence with clear room for refinement. When you encountered categories requiring reconsideration, the key decision points often involved weighing multiple competing clinical factors.`);
+                parts.push(`Focus on identifying which specific clinical indicators elevate or reduce urgency. Consider: What makes a presentation time-critical? Which physiological parameters most strongly indicate instability? Discussing your reasoning with experienced clinicians will help calibrate your judgment.`);
+            } else if (accuracy >= 40) {
+                parts.push(`ATS category allocation requires focused development. The scenarios where reconsideration was needed suggest opportunities to strengthen your understanding of urgency indicators and the ATS framework itself.`);
+                parts.push(`Recommended strategies include: reviewing the ATS descriptors systematically, discussing specific scenarios with your educator to understand the clinical reasoning behind category decisions, and practicing with immediate feedback. Consider what distinguishes Category 2 from Category 3 presentations - this is often where the most nuanced judgment is required.`);
+            } else {
+                parts.push(`ATS category allocation needs significant attention and represents a priority learning area. Accurate triage is foundational to emergency care, and strengthening this skill should be your immediate focus.`);
+                parts.push(`Work closely with your educator to understand the ATS framework. Review scenarios where your category selection differed from best practice, identifying what clinical features you may have underweighted or overweighted. Consider formal education sessions on the ATS and supervised practice with real-time feedback.`);
+            }
+
+            return parts.join(' ');
+        }
+
+        function generateDetailedPriorities(analysis) {
+            let priorities = [];
+
+            // Priority 1: ATS if accuracy < 70%
+            if (analysis.totalATS > 0) {
+                const accuracy = (analysis.atsCorrect / analysis.totalATS) * 100;
+                if (accuracy < 70) {
+                    priorities.push(`Strengthening ATS category allocation through systematic review of urgency indicators and the ATS framework, with particular focus on distinguishing between adjacent categories (e.g., Category 2 vs 3). Seek opportunities to discuss your triage reasoning with experienced clinicians.`);
+                }
+            }
+
+            // Priority 2-4: Top gaps
+            if (analysis.gaps.length > 0) {
+                priorities.push(`Ensuring consistent inclusion of ${analysis.gaps[0].label} in all triage assessments. Consider developing a structured template or mental checklist to support completeness.`);
+            }
+            if (analysis.gaps.length > 1) {
+                priorities.push(`Building habit patterns around ${analysis.gaps[1].label}. Practice deliberately focusing on this element in every patient encounter until it becomes automatic.`);
+            }
+            if (analysis.gaps.length > 2 && priorities.length < 3) {
+                priorities.push(`Incorporating ${analysis.gaps[2].label} into your standard assessment approach, recognising its contribution to comprehensive clinical decision-making.`);
+            }
+
+            // If still fewer than 3 priorities, add development goals
+            if (priorities.length < 3) {
+                if (analysis.strengths.length > 0) {
+                    priorities.push(`Maintaining your consistent strengths in ${analysis.strengths[0].label} while expanding your assessment comprehensiveness to other domains.`);
+                } else {
+                    priorities.push(`Developing systematic assessment patterns through deliberate practice, ensuring you approach each patient with a structured mental framework.`);
+                }
+            }
+
+            let result = "Based on pattern analysis across your scenarios, focus your development efforts on:\n\n";
+            priorities.slice(0, 3).forEach((p, i) => {
+                result += `${i + 1}. ${p}\n\n`;
+            });
+            result += "These priorities are sequenced to build foundational competence while addressing the most impactful opportunities for growth. Discuss these with your educator to develop a targeted learning plan.";
+
+            return result;
+        }
+
+        function generateDetailedClosing(name, analysis) {
+            let parts = [];
+
+            parts.push(`${name} engagement across these ${analysis.feedbackCount || 'multiple'} triage scenarios reflects meaningful professional commitment to developing clinical competence.`);
+            
+            if (analysis.strengths.length >= 3) {
+                parts.push(`You've established consistent strengths that provide a solid foundation for continued growth.`);
+            } else if (analysis.strengths.length > 0) {
+                parts.push(`You're beginning to establish practice patterns that will strengthen with continued experience.`);
+            }
+
+            if (analysis.gaps.length > 0) {
+                parts.push(`The development areas identified represent clear learning priorities - concrete elements you can intentionally practice and improve.`);
+            }
+
+            parts.push(`Remember that triage expertise develops through accumulated experience, thoughtful reflection, and integration of feedback. Each patient encounter is a learning opportunity.`);
+            
+            parts.push(`As you continue your clinical development, seek opportunities to practice in supervised settings, ask questions about clinical reasoning, and discuss cases with experienced colleagues. Your growth trajectory is evident in this work.`);
+            
+            parts.push(`What aspects of triage assessment or clinical reasoning would you most like to explore or strengthen in your upcoming learning experiences?`);
+
+            return parts.join(' ');
+        }
+
+        function displayReport() {
+            if (!currentReport) return;
+
+            document.getElementById('reportName').textContent = currentReport.name;
+            document.getElementById('reportDate').textContent = currentReport.date;
+            document.getElementById('reportSummary').textContent = currentReport.summary;
+            document.getElementById('reportStrengths').textContent = currentReport.strengths;
+            document.getElementById('reportGaps').textContent = currentReport.gaps;
+            document.getElementById('reportATS').textContent = currentReport.ats;
+            document.getElementById('reportPriorities').textContent = currentReport.priorities;
+            document.getElementById('reportClosing').textContent = currentReport.closing;
+
+            document.getElementById('reportSection').classList.remove('hidden');
+            document.getElementById('instructions').classList.add('hidden');
+        }
+
+        function copyReport() {
+            if (!currentReport) return;
+
+            const text = `SYNTHESISED TRIAGE FEEDBACK REPORT
+${currentReport.name}
+${currentReport.date}
+
+========================================
+
+SUMMARY
+${currentReport.summary}
+
+========================================
+
+CONSISTENT STRENGTHS
+${currentReport.strengths}
+
+========================================
+
+RECURRING DEVELOPMENT AREAS
+${currentReport.gaps}
+
+========================================
+
+ATS CATEGORY ALLOCATION PERFORMANCE
+${currentReport.ats}
+
+========================================
+
+PRIORITY DEVELOPMENT AREAS
+${currentReport.priorities}
+
+========================================
+
+CLOSING COMMENT
+${currentReport.closing}
+
+========================================
+
+This feedback has been generated using INACSL-aligned principles emphasizing learner-centered, constructive, and kind communication to support professional development.`;
+
+            navigator.clipboard.writeText(text);
+            alert('Report copied to clipboard!');
+        }
+
+        function clearForm() {
+            if (confirm('This will clear all input and generated reports. Continue?')) {
+                document.getElementById('studentName').value = '';
+                document.getElementById('feedbackInput').value = '';
+                currentReport = null;
+                document.getElementById('reportSection').classList.add('hidden');
+                document.getElementById('instructions').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
